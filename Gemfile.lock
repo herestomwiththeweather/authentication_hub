@@ -1,0 +1,12 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    rubame (0.0.2)
+      websocket (~> 1.0)
+    websocket (1.2.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  rubame
