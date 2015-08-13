@@ -10,6 +10,28 @@ module Rubame
   end
 
   class Client
+    class Base64
+      def encode(str)
+        [str].pack('m')
+      end
+
+      def decode(str)
+        str.unpack('m').first
+      end
+
+      # Encode session cookies as Marshaled Base64 data
+      class Marshal < Base64
+        def encode(str)
+          super(::Marshal.dump(str))
+        end
+
+        def decode(str)
+          return unless str
+          ::Marshal.load(super(str)) rescue nil
+        end
+      end
+    end
+
     def secure_compare(a, b)
       # from Rack::Utils
       #
@@ -39,7 +61,9 @@ module Rubame
         false
       else
         puts "XXX session data verified!!!"
-        #coder.decode(session_data) || {}
+        coder = Base64::Marshal.new
+        data = coder.decode(session_data) || {}
+        puts "XXX data: #{data}"
         true
       end
     end
