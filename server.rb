@@ -1,6 +1,7 @@
 require 'rubame'
 require 'openssl'
 require 'uri'
+require 'json'
 
 module Rubame
   class Server
@@ -10,6 +11,8 @@ module Rubame
   end
 
   class Client
+    attr_accessor :user_id, :name
+
     class Base64
       def encode(str)
         [str].pack('m')
@@ -63,7 +66,9 @@ module Rubame
         puts "XXX session data verified!!!"
         coder = Base64::Marshal.new
         data = coder.decode(session_data) || {}
-        puts "XXX data: #{data}"
+        self.user_id = data['user_id']
+        self.name = data['email']
+        puts "XXX verified (#{user_id}): #{name}"
         true
       end
     end
@@ -111,7 +116,17 @@ while true
     end
 
     client.onmessage do |mess|
-      puts "message(#{client.socket}): #{mess}"
+      puts "message(#{client.user_id}): #{mess}"
+      request = JSON.parse(mess)
+      if ['hello','hello-back','peer-update'].member?(request['type'])
+        # name should match name set in handshake
+        if client.name != request['name']
+          puts "closing! incoming hello name #{request['name']} does not match #{client.name}"
+          #server.close(client)
+        end
+      else
+        server.close(client) if client.user_id.to_s != request['clientId']
+      end
       server.clients.values.each do |c|
         c.send mess unless c.socket == client.socket
       end
