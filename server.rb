@@ -116,6 +116,7 @@ while true
     end
 
     client.onmessage do |mess|
+      legit = true
       puts "message(#{client.user_id}): #{mess}"
       request = JSON.parse(mess)
       if ['hello','hello-back','peer-update'].member?(request['type'])
@@ -125,10 +126,15 @@ while true
           #server.close(client)
         end
       else
-        server.close(client) if client.user_id.to_s != request['clientId']
+        if client.user_id.to_s != request['clientId']
+          legit = false
+          server.close(client)
+        end
       end
-      server.clients.values.each do |c|
-        c.send mess unless c.socket == client.socket
+      if legit
+        server.clients.values.each do |c|
+          c.send mess unless c.socket == client.socket
+        end
       end
     end
 
